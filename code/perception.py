@@ -103,7 +103,198 @@ def perception_step(Rover):
         # Rover.nav_dists = rover_centric_pixel_distances
         # Rover.nav_angles = rover_centric_angles
     
+    img = Rover.img
+    data = Rover
  
+    #output_image = np.zeros((img.shape[0] + data.worldmap.shape[0], img.shape[1]*2, 3))
+        # Next you can populate regions of the image with various output
+        # Here I'm putting the original image in the upper left hand corner
+    #output_image[0:img.shape[0], 0:img.shape[1]] = img
+    
+    
+    dst_size = 5 
+    # Set a bottom offset to account for the fact that the bottom of the image 
+    # is not the position of the rover but a bit in front of it
+    # this is just a rough guess, feel free to change it!
+    bottom_offset = 6
+    source = np.float32([[14, 140], [301 ,140],[200, 96], [118, 96]])
+    destination = np.float32([[img.shape[1]/2 - dst_size, img.shape[0] - bottom_offset],
+                  [img.shape[1]/2 + dst_size, img.shape[0] - bottom_offset],
+                  [img.shape[1]/2 + dst_size, img.shape[0] - 2*dst_size - bottom_offset], 
+                  [img.shape[1]/2 - dst_size, img.shape[0] - 2*dst_size - bottom_offset],
+                  ])
+
+
+        # Let's create more images to add to the mosaic, first a warped image
+    warped = perspect_transform(img, source, destination)
+        # Add the warped image in the upper right hand corner
+    #output_image[0:img.shape[0], img.shape[1]:] = warped
+    Rover.vision_image = warped.copy()
+    
+
+    drivable = color_thresh(img,(146,146,146))
+    dy,dx=drivable.nonzero()
+    #output_image[dy,dx,2] = 255
+    
+    topview_drivable = perspect_transform(drivable, source, destination)
+    topview_drivable[0:(img.shape[0]//8)*3,:] = 0
+
+    
+    
+    #show topview drivable overlay
+    topvy,topvx=topview_drivable.nonzero()
+    Rover.vision_image[topvy,topvx,1] = 255
+    
+    xpix, ypix = rover_coords(topview_drivable)
+    
+    # Calculate pixel values in rover-centric coords and distance/angle to all pixels
+    #dist, angles = to_polar_coords(xpix, ypix)
+    #mean_dir = np.mean(angles)
+    
+    wxpix,wypix = pix_to_world(xpix, ypix, data.pos[0], data.pos[1], data.yaw, 200, 10)
+    
+    
+    #show topview nondrivable overlay
+    topview_nondrivable = np.zeros_like(topview_drivable)
+    topview_nondrivable = 255-topview_drivable
+    topview_nondrivable[0:(img.shape[0]//8)*3,:] = 0
+    topview_nondrivable[(255-warped[:,:,0])==255] = 0
+    
+    topnvy,topnvx=topview_nondrivable.nonzero()
+    Rover.vision_image[topnvy,topnvx,0] = 255
+    xnpix, ynpix = rover_coords(topview_nondrivable)
+    wxnpix,wynpix = pix_to_world(xnpix, ynpix, data.pos[0], data.pos[1], data.yaw, 200, 10)
+    
+
+    #update worldmap if pitch and roll not too crazy
+    if (Rover.pitch + 360) % 360 < 2 and (Rover.roll + 360) % 360 < 2:
+        #drivable
+        data.worldmap[wypix, wxpix,2] += 16
+        data.worldmap[wypix, wxpix,0] -= 16
+        data.recentlyvisited[wypix, wxpix] += 1
+        data.recentlyvisited[:,:]-=.01
+        data.recentlyvisited[data.recentlyvisited<0] = 0
+        data.recentlyvisited[data.recentlyvisited>100] = 100
+        
+        #non drivable
+        data.worldmap[wynpix, wxnpix,0] += 10
+        data.worldmap[wynpix, wxnpix,2] -= 10
+        #data.worldmap[(data.worldmap[:,:,2]>200).nonzero(),0] = 0 #if space was marked as very drivable, don't mark nondrivable
+    #data.worldmap[(data.worldmap[:,:,2]>32).nonzero(),0] = 0 #if space was marked as very drivable, don't mark nondrivable
+        
+        data.worldmap[data.worldmap < 0] = 0
+        data.worldmap[data.worldmap > 255] = 255
+  
+
+    
+    
+    # find yellow rocks
+    hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
+
+    # define range of yellow color in HSV
+    yellowpix = (np.abs(hsv[:,:,0] -23) < 10) \
+                & (hsv[:,:,1] > 80) \
+                & (hsv[:,:,2] > 100) 
+               
+    #print(img[93,42])            
+    #print(hsv[93,42])
+    #output_image[93,42,2]=255
+    yellowmask = np.zeros_like(img[:,:,0])
+    blobmask= np.zeros_like(yellowmask)
+    
+    # Index the array of zeros with the boolean array and set to 1
+    yellowmask[yellowpix] = 255
+    #print(len(dy))
+    dy, dx=yellowmask.nonzero()
+    #print(len(dy))        
+
+    yrpix=np.float32([])
+    Rover.rockvisible = False
+    if(len(dy)>8):  # found some yellow
+        
+        
+          
+        keypointimg = np.zeros_like(img)
+        keypointimg = img[0:img.shape[0], 0:img.shape[1]]
+        
+        # draw the contours on the image
+        (_, contours, _) = cv2.findContours(yellowmask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        c = max(contours, key=cv2.contourArea)
+        
+        rock_bottom = tuple(c[c[:, :, 1].argmax()][0]) #location of the yellow rock. should draw directly on worldmap
+        #print("cent",rock_bottom)
+        cv2.drawContours(keypointimg, [c], -1, (255, 0,0), 2)
+           
+        #output_image[0:img.shape[0], 0:img.shape[1]]=keypointimg
+        
+    
+        rockpoint=np.zeros_like(yellowmask)
+        cv2.circle(rockpoint,rock_bottom, 5, 255, -1)
+        #rockpoint[rock_bottom]=255
+        topview_rock = perspect_transform(rockpoint, source, destination)
+        
+        
+        topy,topx=topview_rock.nonzero()
+        if(len(topy)):
+            topvy, topvx = max(zip(topy,topx),key=lambda i:i[0])
+
+            # todo update Rover for rock collection and location info
+            cv2.circle(Rover.vision_image,(topvx,topvy), 20, (0,255,0), -1) #draw a circle at location of rock (should do better, eg not filled, but need to draw directly on worldmap)
+
+            topview_rock = np.zeros_like(warped[:,:,0])
+            cv2.circle(topview_rock,(topvx,topvy), 15, 255, -1)
+            Rover.rockvisible = True
+            #output_image[topvy,topvx+img.shape[1]-1,0] = 255
+
+            xrpix, yrpix = rover_coords(topview_rock)
+
+            wxrpix,wyrpix = pix_to_world(xrpix, yrpix, data.pos[0], data.pos[1], data.yaw, 200, 10)
+
+            if (Rover.pitch + 360) % 360 < 3 and (Rover.roll + 360) % 360 < 3:
+                #data.worldmap[wypix, wxpix,0] += 128
+                data.worldmap[wyrpix, wxrpix,:] += 255
+                data.worldmap[data.worldmap > 255]=255
+    
+    
+    
+    
+    # Overlay worldmap with ground truth map
+    map_add = cv2.addWeighted(data.worldmap, 1, data.ground_truth, 0.5, 0)
+    
+        # Flip map overlay so y-axis points upward and add to output_image 
+    #output_image[img.shape[0]:, 0:data.worldmap.shape[1]] = np.flipud(map_add)
+    
+    xpixa=[]
+    ypixa=[]
+    
+    for i in range(0,len(ypix)):
+        if data.recentlyvisited[wypix[i],wxpix[i]] > 50:  # only add if not very recently visited
+            xpixa.append(xpix[i])
+            ypixa.append(ypix[i])
+        else:
+            for ii in range(3):
+                xpixa.append(xpix[i])
+                ypixa.append(ypix[i])
+
+    
+    for j in range(0,len(yrpix)):
+        print("Yellow Rock")
+        for jj in range(500):
+            xpixa.append(xrpix[j])
+            ypixa.append(yrpix[j])
+
+    xpixa=np.float32(xpixa)
+    ypixa=np.float32(ypixa)
+
+    dists, angles = to_polar_coords(xpixa, ypixa) #should do based on map, not current image
+    
+    Rover.nav_angles = angles
+    Rover.nav_dists = dists
+    
+        # Then putting some text over the image
+    #cv2.putText(output_image,"Populate this image with your analyses to make a video!", (20, 20), 
+    #            cv2.FONT_HERSHEY_COMPLEX, 0.4, (255, 255, 255), 1)
+    #data.count += 1 # Keep track of the index in the Databucket()
     
     
     return Rover
