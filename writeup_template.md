@@ -44,6 +44,23 @@ In this project I coded the brains of this rover to map the area and pick up roc
 
 #### 1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.  
 
+
+### Notebook Analysis
+#### 1. Run the functions provided in the notebook on test images (first with the test data provided, next on data you have recorded). Add/modify functions to allow for color selection of obstacles and rock samples.
+As described above, I used thresholding to determine the navigable terrain, and HSV colorspace threshold + OpenCV contour detector to find the rocks.
+
+The animated image at the top of this document shows the results.
+
+
+### Autonomous Navigation and Mapping
+
+#### 1. Fill in the `perception_step()` (at the bottom of the `perception.py` script) and `decision_step()` (in `decision.py`) functions in the autonomous mapping scripts and an explanation is provided in the writeup of how and why these functions were modified as they were.
+
+
+#### 2. Launching in autonomous mode your rover can navigate and map autonomously.  Explain your results and how you might improve them in your writeup.  
+
+**Note: running the simulator with different choices of resolution and graphics quality may produce different results, particularly on different machines!  Make a note of your simulator settings (resolution and graphics quality set on launch) and frames per second (FPS output to terminal by `drive_rover.py`) in your writeup when you submit the project so your reviewer can reproduce your results.**
+
 Based on the provided sample code, I made the following additional changes to complete the project
 
 A. Perception
@@ -75,7 +92,6 @@ B. Decision
 3. Add checks to slow down but keep moving if rock is visible (visibility set in perception step)
 4. Add brake when near sample (built in info) to allow pickup to be sent
 
-
 C. Hyperparameters
 1. Throttle set to .3 (.1 when rock is visible)
 2. Max velocity 2 m/s
@@ -100,26 +116,5 @@ F. Failures and Future
 2. Sometimes rover runs into small rocks directly in front (add small obstacle detection)
 3. Sometimes rover returns to explored areas before finishing mapping (add visited places)
 
-### Notebook Analysis
-#### 1. Run the functions provided in the notebook on test images (first with the test data provided, next on data you have recorded). Add/modify functions to allow for color selection of obstacles and rock samples.
-As described above, I used thresholding to determine the navigable terrain, and HSV colorspace threshold + OpenCV contour detector to find the rocks.
 
-The animated image at the top of this document shows the results.
-
-
-### Autonomous Navigation and Mapping
-
-#### 1. Fill in the `perception_step()` (at the bottom of the `perception.py` script) and `decision_step()` (in `decision.py`) functions in the autonomous mapping scripts and an explanation is provided in the writeup of how and why these functions were modified as they were.
-
-
-#### 2. Launching in autonomous mode your rover can navigate and map autonomously.  Explain your results and how you might improve them in your writeup.  
-
-**Note: running the simulator with different choices of resolution and graphics quality may produce different results, particularly on different machines!  Make a note of your simulator settings (resolution and graphics quality set on launch) and frames per second (FPS output to terminal by `drive_rover.py`) in your writeup when you submit the project so your reviewer can reproduce your results.**
-
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
-
-
-
-![alt text][image3]
-
-
+<img src="RoverCollector-x10.gif" width="960" />
