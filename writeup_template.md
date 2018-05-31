@@ -49,9 +49,9 @@ In this project I coded the brains of this rover to map the area and pick up roc
 #### 1. Run the functions provided in the notebook on test images (first with the test data provided, next on data you have recorded). Add/modify functions to allow for color selection of obstacles and rock samples.
 As described above, I used thresholding to determine the navigable terrain, and HSV colorspace threshold + OpenCV contour detector to find the rocks.  The below video was generated from my own training data collected in the simulator and processed in the notebook (locally)
 
-<video src="output/test_mapping.mp4" width="960" />
+<img src="notebookoutput.gif" width="960" />
 
-The animated image at the top of this document shows the results.
+The animated image at the top of this document shows the results when run in autonomous mode.
 
 
 ### Autonomous Navigation and Mapping
