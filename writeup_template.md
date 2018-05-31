@@ -61,7 +61,7 @@ The animated image at the top of this document shows the results.
 
 **Note: running the simulator with different choices of resolution and graphics quality may produce different results, particularly on different machines!  Make a note of your simulator settings (resolution and graphics quality set on launch) and frames per second (FPS output to terminal by `drive_rover.py`) in your writeup when you submit the project so your reviewer can reproduce your results.**
 
-Based on the provided sample code, I made the following additional changes to complete the project
+## Based on the provided sample code, I made the following additional changes to complete the project
 
 A. Perception
 
