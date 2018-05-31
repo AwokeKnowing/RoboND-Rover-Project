@@ -6,9 +6,9 @@ In this project I coded the brains of this rover to map the area and pick up roc
 
 ### Here below is the full video (YouTube) at 1x speed.  The above animation is 10x speed.
 
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=https://youtu.be/m-aD7KrcaeE
-" target="_blank"><img src="http://img.youtube.com/vi/m-aD7KrcaeE/0.jpg" 
-alt="rover driving on mars-like area collecting yellow rocks" width="240" height="180" style="text-align:center;border: 10px solid red" /></a>
+<a href="https://www.youtube.com/embed/m-aD7KrcaeE" target="_blank">
+  <img src="http://img.youtube.com/vi/m-aD7KrcaeE/0.jpg" alt="rover driving on mars-like area collecting yellow rocks" width="240" height="180" style="text-align:center;border: 10px solid red" />
+</a>
 
 
 ---
@@ -102,14 +102,11 @@ F. Failures and Future
 
 ### Notebook Analysis
 #### 1. Run the functions provided in the notebook on test images (first with the test data provided, next on data you have recorded). Add/modify functions to allow for color selection of obstacles and rock samples.
-Here is an example of how to include an image in your writeup.
+As described above, I used thresholding to determine the navigable terrain, and HSV colorspace threshold + OpenCV contour detector to find the rocks.
 
-![alt text][image1]
+The animated image at the top of this document shows the results.
 
-#### 1. Populate the `process_image()` function with the appropriate analysis steps to map pixels identifying navigable terrain, obstacles and rock samples into a worldmap.  Run `process_image()` on your test data using the `moviepy` functions provided to create video output of your result. 
-And another! 
 
-![alt text][image2]
 ### Autonomous Navigation and Mapping
 
 #### 1. Fill in the `perception_step()` (at the bottom of the `perception.py` script) and `decision_step()` (in `decision.py`) functions in the autonomous mapping scripts and an explanation is provided in the writeup of how and why these functions were modified as they were.
